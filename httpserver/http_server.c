@@ -3,13 +3,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdbool.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 
 #include <netinet/in.h>
 
-int err_n_die(char *message);
+void err_n_die(char *message, bool die);
 
 int main(void) {
   
@@ -18,7 +19,7 @@ int main(void) {
   html_data = fopen("index.html", "r");
 
   if (html_data == NULL)   //Make sure index.html is a proper file
-    err_n_die("Issue opening index.html");
+    err_n_die("Issue opening index.html", true);
 
   // Create a string and store index.html contents into it
   char response_data[1024];
@@ -35,7 +36,7 @@ int main(void) {
   server_socket = socket(AF_INET, SOCK_STREAM, 0);
 
   if (server_socket <= 0) // Make sure the socket is created properly
-    err_n_die("Creating the socket failed");
+    err_n_die("Creating the socket failed", true);
   
   // Define the address
   struct sockaddr_in server_address;
@@ -45,11 +46,11 @@ int main(void) {
 
   // Bind the socket to the port
   if (bind(server_socket, (struct sockaddr *) &server_address, sizeof(server_address)) != 0) // Make sure the socket binds to the port properly
-    err_n_die("Issue binding the socket to the port");
+    err_n_die("Issue binding the socket to the port", true);
 
   //Listen for connections
   if (listen(server_socket, 5) != 0) // Make sure the socket listens properly
-    err_n_die("Issue listening on socket");
+    err_n_die("Issue listening on socket", true);
 
   //Make a variable for the client socket
   int client_socket;
@@ -57,6 +58,13 @@ int main(void) {
   //Continually accept connections and send the HTTP data
   while (1) {
     client_socket = accept(server_socket, NULL, NULL);
+    if (client_socket < 0) {
+      err_n_die("Issue accepting connection", false);
+      printf("Moving to next connection...");
+      close(client_socket);
+      continue;
+    }
+
     printf("Got connection\n");
     send(client_socket, http_header, sizeof(http_header), 0);
     close(client_socket);
@@ -65,9 +73,12 @@ int main(void) {
   return 0;
 }
 
-int err_n_die(char *message) {
+void err_n_die(char *message, bool die) {
   printf("ERROR: %s\n", message);
   printf("Code %d: %s\n", errno, strerror(errno));
-  printf("Exiting...\n");
-  exit(EXIT_FAILURE);
+
+  if (die == true) {
+    printf("Exiting...\n");
+    exit(EXIT_FAILURE);
+  }
 }

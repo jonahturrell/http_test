@@ -17,8 +17,7 @@ int main(void) {
   FILE *html_data;
   html_data = fopen("index.html", "r");
 
-  //Make sure index.html is proper
-  if (html_data == NULL)
+  if (html_data == NULL)   //Make sure index.html is a proper file
     err_n_die("Issue opening index.html");
 
   // Create a string and store index.html contents into it
@@ -34,6 +33,9 @@ int main(void) {
   // Create a socket
   int server_socket;
   server_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+  if (server_socket <= 0) // Make sure the socket is created properly
+    err_n_die("Creating the socket failed");
   
   // Define the address
   struct sockaddr_in server_address;
@@ -42,10 +44,12 @@ int main(void) {
   server_address.sin_addr.s_addr = INADDR_ANY;
 
   // Bind the socket to the port
-  bind(server_socket, (struct sockaddr *) &server_address, sizeof(server_address));
+  if (bind(server_socket, (struct sockaddr *) &server_address, sizeof(server_address)) != 0) // Make sure the socket binds to the port properly
+    err_n_die("Issue binding the socket to the port");
 
   //Listen for connections
-  listen(server_socket, 5);
+  if (listen(server_socket, 5) != 0) // Make sure the socket listens properly
+    err_n_die("Issue listening on socket");
 
   //Make a variable for the client socket
   int client_socket;
@@ -63,7 +67,7 @@ int main(void) {
 
 int err_n_die(char *message) {
   printf("ERROR: %s\n", message);
-  printf("Error code %d: %s\n", errno, strerror(errno));
+  printf("Code %d: %s\n", errno, strerror(errno));
   printf("Exiting...\n");
   exit(EXIT_FAILURE);
 }

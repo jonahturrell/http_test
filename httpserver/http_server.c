@@ -2,17 +2,24 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 
 #include <netinet/in.h>
 
+int err_n_die(char *message);
+
 int main(void) {
   
   // Load a pointer to the index.html file
   FILE *html_data;
   html_data = fopen("index.html", "r");
+
+  //Make sure index.html is proper
+  if (html_data == NULL)
+    err_n_die("Issue opening index.html");
 
   // Create a string and store index.html contents into it
   char response_data[1024];
@@ -52,4 +59,11 @@ int main(void) {
   }
   
   return 0;
+}
+
+int err_n_die(char *message) {
+  printf("ERROR: %s\n", message);
+  printf("Error code %d: %s\n", errno, strerror(errno));
+  printf("Exiting...\n");
+  exit(EXIT_FAILURE);
 }

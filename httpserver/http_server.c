@@ -23,7 +23,7 @@ int main(void) {
   printf("Configuring local address...\n");
   struct addrinfo hints;
   memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_INET;
+  hints.ai_family = AF_INET6;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
 
@@ -43,6 +43,13 @@ int main(void) {
 
   if (!ISVALIDSOCKET(socket_listen)) { // Check that the socket was successfully created
     fprintf(stderr, "socket() failed. (%d)\n", GETSOCKETERRNO());
+    return EXIT_FAILURE;
+  }
+
+  //  Dual stack IPv6 support
+  int option = 0;
+  if (setsockopt(socket_listen, IPPROTO_IPV6, IPV6_V6ONLY, (void*) &option, sizeof(option))) {
+    fprintf(stderr, "setsockopt() failed. (%d)\n", GETSOCKETERRNO());
     return EXIT_FAILURE;
   }
 
